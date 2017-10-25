@@ -28,6 +28,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.StringRes;
@@ -35,6 +36,7 @@ import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.widget.Button;
 
 /**
  * RateThisApp<br>
@@ -44,7 +46,7 @@ import android.view.KeyEvent;
  */
 public class RateThisApp {
 
-    private static final String TAG = RateThisApp.class.getSimpleName();
+    private static final String TAG = com.kobakei.ratethisapp.RateThisApp.class.getSimpleName();
 
     private static final String PREF_NAME = "RateThisApp";
     private static final String KEY_INSTALL_DATE = "rta_install_date";
@@ -57,10 +59,12 @@ public class RateThisApp {
     private static boolean mOptOut = false;
     private static Date mAskLaterDate = new Date();
 
-    private static Config sConfig = new Config();
-    private static Callback sCallback = null;
+    private static com.kobakei.ratethisapp.RateThisApp.Config sConfig = new com.kobakei.ratethisapp.RateThisApp.Config();
+    private static com.kobakei.ratethisapp.RateThisApp.Callback sCallback = null;
     // Weak ref to avoid leaking the context
     private static WeakReference<AlertDialog> sDialogRef = null;
+
+    public static int sTextColorButton;
 
     /**
      * If true, print LogCat
@@ -71,7 +75,7 @@ public class RateThisApp {
      * Initialize RateThisApp configuration.
      * @param config Configuration object.
      */
-    public static void init(Config config) {
+    public static void init(com.kobakei.ratethisapp.RateThisApp.Config config) {
         sConfig = config;
     }
 
@@ -80,7 +84,7 @@ public class RateThisApp {
      * The callback will receive yes/no/later events.
      * @param callback
      */
-    public static void setCallback(Callback callback) {
+    public static void setCallback(com.kobakei.ratethisapp.RateThisApp.Callback callback) {
         sCallback = callback;
     }
 
@@ -166,7 +170,7 @@ public class RateThisApp {
             }
             long threshold = TimeUnit.DAYS.toMillis(sConfig.mCriteriaInstallDays);   // msec
             if (new Date().getTime() - mInstallDate.getTime() >= threshold &&
-                new Date().getTime() - mAskLaterDate.getTime() >= threshold) {
+                    new Date().getTime() - mAskLaterDate.getTime() >= threshold) {
                 return true;
             }
             return false;
@@ -223,10 +227,10 @@ public class RateThisApp {
         builder.setTitle(titleId);
         builder.setMessage(messageId);
         switch (sConfig.mCancelMode) {
-            case Config.CANCEL_MODE_BACK_KEY_OR_TOUCH_OUTSIDE:
+            case com.kobakei.ratethisapp.RateThisApp.Config.CANCEL_MODE_BACK_KEY_OR_TOUCH_OUTSIDE:
                 builder.setCancelable(true); // It's the default anyway
                 break;
-            case Config.CANCEL_MODE_BACK_KEY:
+            case com.kobakei.ratethisapp.RateThisApp.Config.CANCEL_MODE_BACK_KEY:
                 builder.setCancelable(false);
                 builder.setOnKeyListener(new DialogInterface.OnKeyListener() {
                     @Override
@@ -240,7 +244,7 @@ public class RateThisApp {
                     }
                 });
                 break;
-            case Config.CANCEL_MODE_NONE:
+            case com.kobakei.ratethisapp.RateThisApp.Config.CANCEL_MODE_NONE:
                 builder.setCancelable(false);
                 break;
         }
@@ -298,7 +302,23 @@ public class RateThisApp {
                 sDialogRef.clear();
             }
         });
-        sDialogRef = new WeakReference<>(builder.show());
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+        sDialogRef = new WeakReference<>(alertDialog);
+
+        Button mNegativeButton = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        if (mNegativeButton != null) {
+            mNegativeButton.setTextColor(sTextColorButton);
+        }
+        Button mPositiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (mPositiveButton != null) {
+            mPositiveButton.setTextColor(sTextColorButton);
+        }
+        Button mNeutralButton = alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+        if (mNeutralButton != null) {
+            mNeutralButton.setTextColor(sTextColorButton);
+        }
     }
 
     /**
@@ -468,9 +488,9 @@ public class RateThisApp {
         }
 
         /**
-          * Set the cancel mode; namely, which ways the user can cancel the dialog.
-          * @param cancelMode
-          */
+         * Set the cancel mode; namely, which ways the user can cancel the dialog.
+         * @param cancelMode
+         */
         public void setCancelMode(int cancelMode) {
             this.mCancelMode = cancelMode;
         }
